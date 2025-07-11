@@ -158,6 +158,33 @@ func TestEapAkaPrimeSetGetAttr(t *testing.T) {
 			value:     []byte{0x01},
 			expectErr: true,
 		},
+		{
+			name:      "Set AT_NOTIFICATION with valid length",
+			attrType:  AT_NOTIFICATION,
+			value:     []byte{0x12, 0x34},
+			expectErr: false,
+		},
+		{
+			name:      "Set AT_NOTIFICATION with invalid length",
+			attrType:  AT_NOTIFICATION,
+			value:     []byte{0x12},
+			expectErr: true,
+		},
+		{
+			name:     "Set AT_AUTS",
+			attrType: AT_AUTS,
+			value: []byte{
+				0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
+				0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e,
+			},
+			expectErr: false,
+		},
+		{
+			name:      "Set AT_AUTS with invalid length",
+			attrType:  AT_AUTS,
+			value:     []byte{0x01, 0x02, 0x03},
+			expectErr: true,
+		},
 	}
 
 	for _, tc := range tcs {
@@ -184,6 +211,8 @@ func TestEapAkaPrimeSetGetAttr(t *testing.T) {
 				require.Equal(t, uint8(1), attr.length)
 			case AT_MAC, AT_RAND, AT_AUTN:
 				require.Equal(t, uint8(5), attr.length)
+			case AT_NOTIFICATION:
+				require.Equal(t, uint8(1), attr.length)
 			}
 		})
 	}
@@ -364,6 +393,40 @@ func TestEapAkaPrimeMarshal(t *testing.T) {
 			},
 			expectErr: false,
 		},
+		{
+			name:    "AT_NOTIFICATION basic",
+			subType: SubtypeAkaNotification,
+			attrs: map[EapAkaPrimeAttrType][]byte{
+				AT_NOTIFICATION: {0x12, 0x34},
+			},
+			expectedResult: []byte{
+				byte(EapTypeAkaPrime),
+				byte(SubtypeAkaNotification),
+				0x00, 0x00,
+				0x0c, 0x01, 0x12, 0x34, // AT_NOTIFICATION (type=12, length=1, value=0x12 0x34)
+			},
+			expectErr: false,
+		},
+		{
+			name:    "AT_AUTS basic",
+			subType: SubtypeAkaChallenge,
+			attrs: map[EapAkaPrimeAttrType][]byte{
+				AT_AUTS: {
+					0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
+					0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e,
+				},
+			},
+			expectedResult: []byte{
+				byte(EapTypeAkaPrime),     // EAP-AKA' type
+				byte(SubtypeAkaChallenge), // Subtype
+				0x00, 0x00,                // Reserved
+				0x04, 0x04, // AT_AUTS type=4, length=4
+				// 14 bytes AUTS
+				0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
+				0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e,
+			},
+			expectErr: false,
+		},
 	}
 
 	for _, tc := range testCases {
@@ -514,6 +577,37 @@ func TestEapAkaPrimeUnmarshal(t *testing.T) {
 				// Missing AT_RAND value
 			},
 			expectErr: true,
+		},
+		{
+			name: "AT_NOTIFICATION basic",
+			rawData: []byte{
+				byte(EapTypeAkaPrime),
+				byte(SubtypeAkaNotification),
+				0x00, 0x00,
+				0x0c, 0x01, 0x12, 0x34, // AT_NOTIFICATION (type=12, length=1, value=0x12 0x34)
+			},
+			expectedAttrs: map[EapAkaPrimeAttrType][]byte{
+				AT_NOTIFICATION: {0x12, 0x34},
+			},
+			expectErr: false,
+		},
+		{
+			name: "AT_AUTS basic",
+			rawData: []byte{
+				byte(EapTypeAkaPrime),
+				byte(SubtypeAkaChallenge),
+				0x00, 0x00,
+				0x04, 0x04, // AT_AUTS type=4, length=4
+				0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
+				0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e,
+			},
+			expectedAttrs: map[EapAkaPrimeAttrType][]byte{
+				AT_AUTS: {
+					0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
+					0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e,
+				},
+			},
+			expectErr: false,
 		},
 	}
 

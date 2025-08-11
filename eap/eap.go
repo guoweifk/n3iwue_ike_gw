@@ -2,6 +2,7 @@ package eap
 
 import (
 	"crypto/hmac"
+	"crypto/sha1"
 	"crypto/sha256"
 	"encoding/binary"
 	"fmt"
@@ -22,6 +23,7 @@ const (
 	EapTypeMD5
 	EapTypeOTP
 	EapTypeGTC
+	EapTypeAKA              = 23
 	EapTypeAkaPrime EapType = 50
 	EapTypeExpanded EapType = 254
 )
@@ -33,6 +35,7 @@ var typeStr = map[EapType]string{
 	EapTypeMD5:          "EAP-MD5-Challenge",
 	EapTypeOTP:          "EAP-OTP",
 	EapTypeGTC:          "EAP-GTC",
+	EapTypeAKA:          "EAP-AKA",
 	EapTypeAkaPrime:     "EAP-AKA'",
 	EapTypeExpanded:     "EAP-Expanded",
 }
@@ -153,6 +156,8 @@ func (eap *EAP) Unmarshal(b []byte) error {
 			eapTypeData = new(EapNak)
 		case EapTypeMD5:
 			eapTypeData = new(EapMD5)
+		case EapTypeAKA:
+			eapTypeData = new(EapAka)
 		case EapTypeAkaPrime:
 			eapTypeData = new(EapAkaPrime)
 		case EapTypeExpanded:
@@ -200,5 +205,22 @@ func (eap *EAP) CalcEapAkaPrimeAtMAC(key []byte) ([]byte, error) {
 	}
 	sum := h.Sum(nil)
 
+	return sum[:16], nil
+}
+func (eap *EAP) CalcEapAkaAtMAC(key []byte) ([]byte, error) {
+	if eap.EapTypeData.Type() != EapTypeAKA {
+		return nil, fmt.Errorf("Expected EAP-AKA, got %s", eap.EapTypeData.Type())
+	}
+	eapAka := eap.EapTypeData.(*EapAka)
+	if err := eapAka.initMAC(); err != nil {
+		return nil, err
+	}
+	eapBytes, err := eap.Marshal()
+	if err != nil {
+		return nil, err
+	}
+	h := hmac.New(sha1.New, key)
+	h.Write(eapBytes)
+	sum := h.Sum(nil)
 	return sum[:16], nil
 }

@@ -27,6 +27,7 @@ func EncodeEncrypt(
 
 // Before use this function, need to use IKEMessage.Encode first
 // and get IKESA
+// 第一个认证时候收到的46的消息，会走到这里；
 func DecodeDecrypt(
 	msg []byte,
 	ikeHeader *message.IKEHeader,

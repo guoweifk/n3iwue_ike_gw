@@ -178,6 +178,7 @@ const (
 	UPDATE_SA_ADDRESSES           = 16400
 	COOKIE2                       = 16401
 	NO_NATS_ALLOWED               = 16402
+	P_N1_MODE_CAPABILITY          = 51015
 )
 
 // Protocol ID
@@ -243,6 +244,8 @@ const (
 	INTERNAL_IP4_SUBNET  = 13
 	SUPPORTED_ATTRIBUTES = 14
 	INTERNAL_IP6_SUBNET  = 15
+	P_CSCF_IP4_ADDRESS   = 20
+	P_CSCF_IP6_ADDRESS   = 21
 )
 
 // IP protocols ID, used in individual traffic selector

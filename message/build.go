@@ -209,6 +209,106 @@ func (container *IKEPayloadContainer) BuildEAP(code eap_message.EapCode, identif
 	return eap
 }
 
+func BuildEAPAKAEapTypeData(subtype eap_message.EapAkaSubtype, attributeMap map[eap_message.EapAkaAttrType]*eap_message.EapAkaAttr) *eap_message.EapAka {
+
+	eapAka := new(eap_message.EapAka)
+	eapAka.SubType = subtype
+	eapAka.Attributes = attributeMap
+
+	return eapAka
+}
+func pad4(b []byte) []byte {
+	if m := len(b) % 4; m != 0 {
+		return append(b, make([]byte, 4-m)...)
+	}
+	return b
+}
+func akaAttrLen(valuePaddedLen int) uint8 {
+	total := 4 + valuePaddedLen // 头(4B) + 对齐后的 Value
+	return uint8(total / 4)
+}
+
+func BuildEapAkaAttr(attrType eap_message.EapAkaAttrType, vStr string, vBytes []byte) *eap_message.EapAkaAttr {
+
+	switch attrType {
+	case eap_message.AKA_AT_IDENTITY: // AT_IDENTITY
+		idBytes := []byte(vStr)
+		pad := (4 - (len(idBytes) % 4)) % 4
+		paddedLen := len(idBytes) + pad // Value 长度(含padding)
+		l := uint8((4 + paddedLen) / 4) // 头4B + Value，再除以4
+
+		return &eap_message.EapAkaAttr{
+			AttrType:            attrType,            // 14
+			Length:              l,                   // 例如 60/4=15
+			Identity_actual_len: uint8(len(idBytes)), // 54
+			Identity:            vStr,                // "0505030000000001@nai.epc.mnc003.mcc505.3gppnetwork.org"
+			Padding:             "0000",
+		}
+
+	case eap_message.AKA_AT_RES: // AT_RES
+		// resBytes 是你算出来的 8B RES（不是 hex 字符串）
+		resBytes := vBytes
+
+		// Value = 2B 位长(大端) + RES
+		val := make([]byte, 2+len(resBytes))
+		binary.BigEndian.PutUint16(val[:2], uint16(len(resBytes)*8)) // 8B -> 64 -> 0x0040
+		copy(val[2:], resBytes)
+
+		// 计算 Length（单位4字节：Type+Len=2B，剩下是 val，再补零对齐）
+		total := 2 + len(val)
+		if pad := (4 - (total % 4)) % 4; pad > 0 {
+			val = append(val, make([]byte, pad)...)
+			total += pad
+		}
+		l := uint8(total / 4)
+
+		return &eap_message.EapAkaAttr{
+			AttrType: eap_message.AKA_AT_RES,
+			Length:   l,
+			Value:    val, // 已含“位长+RES(+pad)”
+		}
+
+	//case eap_message.AKA_AT_MAC:
+	//	// 如果传进来的是十六进制字符串（例如 "0000ecb1be7e..."），要先 decode
+	//
+	//	l := akaAttrLen(len(vBytes))
+	//
+	//	return &eap_message.EapAkaAttr{
+	//		AttrType: attrType,
+	//		Length:   l,
+	//		Value:    vBytes,
+	//	}
+	case eap_message.AKA_AT_MAC:
+		// vBytes 是你算出来的 16B MAC
+		//if len(vBytes) != 16 {
+		//	return nil, fmt.Errorf("AT_MAC: expect 16-byte MAC, got %d", len(vBytes))
+		//}
+
+		// 2B Reserved(0x0000) + MAC(16B)
+		val := make([]byte, 2+len(vBytes))
+		// Reserved 默认 0x0000
+		copy(val[2:], vBytes)
+
+		// 计算 Length (单位 4B)
+		total := 2 /*Type+Len*/ + len(val)
+		if pad := (4 - (total % 4)) % 4; pad > 0 {
+			val = append(val, make([]byte, pad)...)
+			total += pad
+		}
+		l := uint8(total / 4)
+
+		return &eap_message.EapAkaAttr{
+			AttrType: attrType,
+			Length:   l,
+			Value:    val, // 已含 reserved+mac(+pad)
+		}
+
+	default:
+		return nil
+	}
+
+}
+
 func (container *IKEPayloadContainer) BuildEAPSuccess(identifier uint8) {
 	eap := &PayloadEap{
 		EAP: &eap_message.EAP{

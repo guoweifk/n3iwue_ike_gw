@@ -1,4 +1,4 @@
-module github.com/free5gc/ike
+module github.com/guoweifk/n3iwue_ike_gw
 
 go 1.21
 

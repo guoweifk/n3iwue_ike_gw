@@ -8,11 +8,11 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	eap_message "github.com/free5gc/ike/eap"
-	"github.com/free5gc/ike/message"
-	"github.com/free5gc/ike/security"
-	"github.com/free5gc/ike/security/encr"
-	"github.com/free5gc/ike/security/integ"
+	eap_message "github.com/guoweifk/n3iwue_ike_gw/eap"
+	"github.com/guoweifk/n3iwue_ike_gw/message"
+	"github.com/guoweifk/n3iwue_ike_gw/security"
+	"github.com/guoweifk/n3iwue_ike_gw/security/encr"
+	"github.com/guoweifk/n3iwue_ike_gw/security/integ"
 )
 
 var (

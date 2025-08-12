@@ -1,7 +1,7 @@
 package message
 
 import (
-	eap_message "github.com/free5gc/ike/eap"
+	eap_message "github.com/guoweifk/n3iwue_ike_gw/eap"
 )
 
 var _ IKEPayload = &PayloadEap{}

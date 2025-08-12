@@ -3,7 +3,7 @@ package integ
 import (
 	"hash"
 
-	"github.com/free5gc/ike/message"
+	"github.com/guoweifk/n3iwue_ike_gw/message"
 )
 
 const (

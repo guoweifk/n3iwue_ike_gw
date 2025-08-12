@@ -3,7 +3,7 @@ package esn
 import (
 	"github.com/pkg/errors"
 
-	"github.com/free5gc/ike/message"
+	"github.com/guoweifk/n3iwue_ike_gw/message"
 )
 
 var (

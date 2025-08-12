@@ -5,8 +5,8 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/free5gc/ike/message"
-	"github.com/free5gc/ike/security"
+	"github.com/guoweifk/n3iwue_ike_gw/message"
+	"github.com/guoweifk/n3iwue_ike_gw/security"
 )
 
 func EncodeEncrypt(

@@ -5,7 +5,7 @@ import (
 	"crypto/sha256"
 	"hash"
 
-	"github.com/free5gc/ike/message"
+	"github.com/guoweifk/n3iwue_ike_gw/message"
 )
 
 func toString_AUTH_HMAC_SHA2_256_128(attrType uint16, intValue uint16, bytesValue []byte) string {
